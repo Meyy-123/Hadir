@@ -20,7 +20,7 @@ img { max-width: 100%; }
 <title>Rekod Kedatangan</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
-/* Susun atur: satu lajur kerja. Pengepala tarikh, jalur ringkasan, kemudian senarai nama dengan kawalan status segmen. */
+/* Susun atur: satu lajur kerja. Tarikh, tab sesi solat, ringkasan sesi, senarai imam dan bilal, kemudian gambaran seluruh hari. */
 :root {
   --bg: #f1f4f6;
   --surface: #ffffff;
@@ -31,7 +31,6 @@ img { max-width: 100%; }
   --accent: #1d4ed8;
   --accent-fg: #ffffff;
   --hadir: #15803d;
-  --lewat: #b45309;
   --tiada: #c2362b;
   --cuti: #4a5d8f;
   --belum: #8995a2;
@@ -50,7 +49,6 @@ img { max-width: 100%; }
     --accent: #6c97ff;
     --accent-fg: #0b1220;
     --hadir: #4ade80;
-    --lewat: #fbbf24;
     --tiada: #f87171;
     --cuti: #93a8e8;
     --belum: #6b7a89;
@@ -68,7 +66,6 @@ img { max-width: 100%; }
   --accent: #6c97ff;
   --accent-fg: #0b1220;
   --hadir: #4ade80;
-  --lewat: #fbbf24;
   --tiada: #f87171;
   --cuti: #93a8e8;
   --belum: #6b7a89;
@@ -91,19 +88,27 @@ button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* Pengepala */
-.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
 .top h1 { font-family: var(--font-head); font-size: 1.9rem; font-weight: 700; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
-.top .date { color: var(--muted); margin: 2px 0 0; font-size: 0.95rem; }
-.clock { font-family: var(--font-head); font-size: 1.9rem; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
-.clock small { display: block; font: 500 0.72rem var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; text-align: right; }
+.top .date { margin: 2px 0 0; font-size: 1rem; font-weight: 500; }
+.top .sub { margin: 0; color: var(--muted); font-size: 0.88rem; }
 
 .nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 7px 12px; font-weight: 500; font-size: 0.88rem; }
 .btn:hover { background: var(--surface-2); }
+.btn:disabled { opacity: 0.5; cursor: default; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
 .btn.primary:hover { filter: brightness(1.08); }
 .btn.warn { border-color: var(--tiada); color: var(--tiada); }
 .nav input[type="date"] { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 10px; }
+
+/* Tab sesi */
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.tab { flex: 1 1 auto; min-width: 5.2rem; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; display: flex; flex-direction: column; align-items: center; font-weight: 600; }
+.tab small { font-weight: 500; font-size: 0.75rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tab:hover { background: var(--surface-2); }
+.tab.done small { color: var(--hadir); }
+.tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.tab[aria-pressed="true"] small { color: inherit; opacity: 0.85; }
 
 /* Ringkasan */
 .sum { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
@@ -113,64 +118,76 @@ button { cursor: pointer; }
 .bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--surface-2); }
 .bar i { display: block; height: 100%; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 10px; }
-.stat { display: flex; flex-direction: column; gap: 0; }
+.stat { display: flex; flex-direction: column; }
 .stat b { font-family: var(--font-head); font-size: 1.3rem; font-variant-numeric: tabular-nums; line-height: 1.2; }
 .stat span { font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
-
-/* Alat senarai */
-.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.tools input[type="search"] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 4px 12px; font-size: 0.82rem; font-weight: 500; }
-.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 
 .note { background: var(--surface-2); border-radius: 8px; padding: 10px 14px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; font-size: 0.88rem; color: var(--muted); }
 
 /* Senarai */
 .list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.row { display: grid; grid-template-columns: minmax(0, 1.3fr) auto 7rem auto; gap: 10px 16px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: minmax(0, 1.3fr) auto auto; gap: 10px 16px; align-items: center; padding: 12px 16px; border-top: 1px solid var(--line); }
 .row:first-child { border-top: 0; }
 .who { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .av { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); font-family: var(--font-head); font-weight: 600; font-size: 0.82rem; color: var(--muted); }
 .row[data-s="hadir"] .av { background: var(--hadir); color: var(--on); }
-.row[data-s="lewat"] .av { background: var(--lewat); color: var(--on); }
 .row[data-s="tiada"] .av { background: var(--tiada); color: var(--on); }
 .row[data-s="cuti"] .av { background: var(--cuti); color: var(--on); }
 .nm { font-weight: 600; overflow-wrap: anywhere; }
 .gp { font-size: 0.8rem; color: var(--muted); overflow-wrap: anywhere; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.seg button { border: 0; border-left: 1px solid var(--line); background: transparent; padding: 6px 11px; font-size: 0.82rem; font-weight: 500; color: var(--muted); }
+.seg button { border: 0; border-left: 1px solid var(--line); background: transparent; padding: 7px 14px; font-size: 0.85rem; font-weight: 500; color: var(--muted); }
 .seg button:first-child { border-left: 0; }
 .seg button:hover { background: var(--surface-2); }
 .seg button[aria-pressed="true"] { color: var(--on); font-weight: 600; }
 .seg button[data-k="hadir"][aria-pressed="true"] { background: var(--hadir); }
-.seg button[data-k="lewat"][aria-pressed="true"] { background: var(--lewat); }
 .seg button[data-k="tiada"][aria-pressed="true"] { background: var(--tiada); }
 .seg button[data-k="cuti"][aria-pressed="true"] { background: var(--cuti); }
-.tm input { width: 100%; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 5px 8px; font-variant-numeric: tabular-nums; }
-.tm span { color: var(--muted); font-size: 0.8rem; }
 .rm { border: 0; background: transparent; color: var(--muted); font-size: 0.8rem; padding: 6px 8px; border-radius: 6px; }
 .rm:hover { background: var(--surface-2); color: var(--tiada); }
 .rm.confirm { color: var(--tiada); font-weight: 600; }
 .empty { padding: 28px 16px; text-align: center; color: var(--muted); }
 
-/* Tambah & output */
+/* Panel */
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .panel h2 { font-family: var(--font-head); font-size: 1.05rem; margin: 0; }
+.panel .hint { margin: 0; color: var(--muted); font-size: 0.85rem; }
+details.panel summary { cursor: pointer; font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; }
+details.panel[open] summary { margin-bottom: 12px; }
 .add { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 8px; }
+.add.one { grid-template-columns: minmax(0, 1fr) auto; }
 .add input { min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 12px; }
-.out textarea { width: 100%; min-height: 150px; resize: vertical; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font: 0.82rem/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--fg); }
+.slist { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.slist li { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 4px 2px 12px; font-size: 0.88rem; font-weight: 500; }
+.out textarea { width: 100%; min-height: 160px; resize: vertical; border: 1px solid var(--line); background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font: 0.82rem/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--fg); }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .toast { font-size: 0.85rem; color: var(--hadir); min-height: 1.2em; }
 
+/* Gambaran hari */
+.mx-wrap { overflow-x: auto; }
+table.mx { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+table.mx th, table.mx td { padding: 8px 10px; text-align: center; border-top: 1px solid var(--line); white-space: nowrap; }
+table.mx thead th { border-top: 0; color: var(--muted); font-weight: 500; font-size: 0.78rem; }
+table.mx th[scope="row"] { text-align: left; font-weight: 600; white-space: normal; min-width: 9rem; }
+table.mx th small { display: block; font-weight: 400; color: var(--muted); }
+.cell { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; font-size: 0.75rem; font-weight: 600; background: var(--surface-2); color: var(--muted); }
+.cell[data-s="hadir"] { background: var(--hadir); color: var(--on); }
+.cell[data-s="tiada"] { background: var(--tiada); color: var(--on); }
+.cell[data-s="cuti"] { background: var(--cuti); color: var(--on); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.8rem; color: var(--muted); }
+
+.mon-nav { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mon-nav strong { font-family: var(--font-head); min-width: 8.5rem; text-align: center; }
+table.mx td { font-variant-numeric: tabular-nums; }
+table.mx td.tot { font-weight: 700; font-size: 1rem; }
+table.mx td.z { color: var(--muted); }
+table.mx thead th.tot { color: var(--fg); font-weight: 600; }
 @media (max-width: 640px) {
   .row { grid-template-columns: minmax(0, 1fr) auto; }
   .seg { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr); }
-  .tm { grid-column: 1 / 2; }
-  .row .rm { justify-self: end; }
-  .add { grid-template-columns: 1fr; }
-  .top h1, .clock { font-size: 1.5rem; }
+  .add, .add.one { grid-template-columns: 1fr; }
+  .top h1 { font-size: 1.5rem; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 </style>
@@ -180,11 +197,9 @@ button { cursor: pointer; }
 
 <div class="wrap">
   <header class="top">
-    <div>
-      <h1>Rekod Kedatangan</h1>
-      <p class="date" id="dateLong"></p>
-    </div>
-    <div class="clock" id="clock" aria-label="Waktu sekarang"><small>Waktu sekarang</small><span id="clockVal">--:--</span></div>
+    <h1>Rekod Kedatangan</h1>
+    <p class="date" id="dateLong"></p>
+    <p class="sub">Kehadiran imam dan bilal mengikut waktu solat</p>
   </header>
 
   <div class="nav">
@@ -194,19 +209,16 @@ button { cursor: pointer; }
     <button class="btn" id="today" type="button">Hari ini</button>
   </div>
 
-  <section class="sum" aria-label="Ringkasan hari">
+  <div class="tabs" id="tabs" role="group" aria-label="Pilih sesi solat"></div>
+
+  <section class="sum" aria-label="Ringkasan sesi">
     <div class="sum-head">
-      <div><strong id="rate">0%</strong> <span>kadar kehadiran</span></div>
+      <div><strong id="big">0 / 0</strong> <span id="bigLabel">hadir</span></div>
       <span id="sumLine"></span>
     </div>
     <div class="bar" id="bar" role="img" aria-label="Agihan status kehadiran"></div>
     <div class="stats" id="stats"></div>
   </section>
-
-  <div class="tools">
-    <input type="search" id="q" placeholder="Cari nama atau kumpulan" aria-label="Cari nama atau kumpulan">
-    <div class="chips" id="chips"></div>
-  </div>
 
   <div class="note" id="sampleNote" hidden>
     <span>Nama dalam senarai ini hanyalah contoh. Kosongkan dan masukkan nama sebenar anda.</span>
@@ -216,11 +228,35 @@ button { cursor: pointer; }
   <ul class="list" id="list"></ul>
 
   <div class="actions">
-    <button class="btn primary" id="markAll" type="button">Tandakan semua belum ditanda sebagai hadir</button>
-    <button class="btn" id="resetDay" type="button">Set semula hari ini</button>
-    <button class="btn" id="mkSummary" type="button">Ringkasan teks</button>
-    <button class="btn" id="mkCsv" type="button">Data CSV</button>
+    <button class="btn primary" id="markAll" type="button">Tandakan semua yang belum sebagai hadir</button>
+    <button class="btn" id="resetSes" type="button">Set semula sesi ini</button>
   </div>
+
+  <section class="panel">
+    <h2>Gambaran hari ini</h2>
+    <div class="mx-wrap" id="matrix"></div>
+    <div class="legend"><span>H = Hadir</span><span>T = Tidak hadir</span><span>C = Cuti</span><span>– = Belum ditanda</span></div>
+    <div class="actions">
+      <button class="btn" id="mkSummary" type="button">Ringkasan teks</button>
+      <button class="btn" id="mkCsv" type="button">CSV hari ini</button>
+      <button class="btn" id="mkCsvMonth" type="button">CSV bulan ini</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Kiraan bulanan</h2>
+    <div class="mon-nav">
+      <button class="btn" id="mPrev" type="button" aria-label="Bulan sebelum">&larr;</button>
+      <strong id="monLabel"></strong>
+      <button class="btn" id="mNext" type="button" aria-label="Bulan seterusnya">&rarr;</button>
+      <button class="btn" id="mNow" type="button">Bulan ini</button>
+    </div>
+    <div class="mx-wrap" id="monTable"></div>
+    <p class="hint">Angka di bawah setiap sesi ialah berapa kali hadir dalam sesi itu sepanjang bulan.</p>
+    <div class="actions">
+      <button class="btn" id="mkMonSummary" type="button">Kiraan sebagai teks</button>
+    </div>
+  </section>
 
   <section class="panel out" id="out" hidden aria-label="Output">
     <h2 id="outTitle">Ringkasan</h2>
@@ -236,78 +272,107 @@ button { cursor: pointer; }
     <h2>Tambah nama</h2>
     <form class="add" id="addForm" autocomplete="off">
       <input id="newName" type="text" placeholder="Nama penuh" required aria-label="Nama penuh">
-      <input id="newGroup" type="text" placeholder="Kumpulan atau jabatan (pilihan)" aria-label="Kumpulan atau jabatan">
+      <input id="newGroup" type="text" list="roles" placeholder="Jawatan (cth. Imam, Bilal)" aria-label="Jawatan">
+      <datalist id="roles"><option value="Imam"><option value="Bilal"><option value="Siak"><option value="Noja"></datalist>
       <button class="btn primary" type="submit">Tambah</button>
     </form>
   </section>
+
+  <details class="panel">
+    <summary>Urus sesi solat</summary>
+    <p class="hint">Lima waktu solat sudah disediakan. Tambah sesi lain jika perlu, contohnya Jumaat atau Tarawih.</p>
+    <ul class="slist" id="sesList"></ul>
+    <form class="add one" id="sesForm" autocomplete="off">
+      <input id="newSes" type="text" placeholder="Nama sesi baharu" required aria-label="Nama sesi baharu">
+      <button class="btn primary" type="submit">Tambah sesi</button>
+    </form>
+    <span class="toast" id="sesMsg" role="status" aria-live="polite" style="color: var(--tiada)"></span>
+  </details>
 </div>
 
 <script>
 (function () {
-  var KEY = 'rekod-kedatangan-v1';
+  var KEY = 'rekod-kedatangan-v2';
   var STATUS = [
     { k: 'hadir', l: 'Hadir' },
     { k: 'tiada', l: 'Tidak hadir' },
     { k: 'cuti', l: 'Cuti' }
   ];
   var LABEL = { hadir: 'Hadir', tiada: 'Tidak hadir', cuti: 'Cuti', belum: 'Belum ditanda' };
+  var SHORT = { hadir: 'H', tiada: 'T', cuti: 'C', belum: '–' };
   var HARI = ['Ahad', 'Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu'];
   var BULAN = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
 
   function pad(n) { return n < 10 ? '0' + n : '' + n; }
   function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function parse(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
-  function hm(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
   function longDate(s) { var d = parse(s); return HARI[d.getDay()] + ', ' + d.getDate() + ' ' + BULAN[d.getMonth()] + ' ' + d.getFullYear(); }
-  function uid() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function uid() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function initials(n) {
     var w = n.trim().split(/\s+/);
     return ((w[0] || '?').charAt(0) + (w.length > 1 ? w[1].charAt(0) : '')).toUpperCase();
   }
+  function $(id) { return document.getElementById(id); }
 
   function seed() {
-    var s = [
-      ['Ahmad Faiz bin Roslan', 'Teknikal'], ['Nurul Aina binti Hamid', 'Pentadbiran'],
-      ['Tan Wei Ming', 'Jualan'], ['Siti Aisyah binti Yusof', 'Pentadbiran'],
-      ['Muthu Kumar a/l Raman', 'Teknikal'], ['Farah Nadia binti Ismail', 'Jualan'],
-      ['Lim Jia Hui', 'Kewangan'], ['Hafizuddin bin Zakaria', 'Teknikal']
+    var ppl = [
+      ['Ustaz Ahmad Zaki bin Hasan', 'Imam'], ['Ustaz Mohd Rizal bin Ismail', 'Imam'],
+      ['Encik Abdul Rahman bin Salleh', 'Bilal'], ['Encik Kamarul bin Yusof', 'Bilal']
     ];
-    return { sample: true, records: {}, people: s.map(function (x) { return { id: uid(), name: x[0], group: x[1] }; }) };
+    var ses = ['Subuh', 'Zuhur', 'Asar', 'Maghrib', 'Isyak'];
+    return {
+      sample: true, records: {},
+      people: ppl.map(function (x) { return { id: uid(), name: x[0], group: x[1] }; }),
+      sessions: ses.map(function (n) { return { id: uid(), name: n }; })
+    };
   }
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
-      if (raw) { var o = JSON.parse(raw); if (o && o.people && o.records) return o; }
+      if (raw) { var o = JSON.parse(raw); if (o && o.people && o.records && o.sessions) return o; }
     } catch (e) {}
     return null;
   }
   var state = load() || seed();
-  /* Rekod lama berstatus "lewat" ditukar kepada "hadir". Waktu masuk kekal. */
-  Object.keys(state.records).forEach(function (d) {
-    Object.keys(state.records[d]).forEach(function (id) {
-      if (state.records[d][id] && state.records[d][id].s === 'lewat') state.records[d][id].s = 'hadir';
-    });
-  });
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
 
   var todayStr = ymd(new Date());
   var cur = todayStr;
-  var filter = 'semua';
-  var query = '';
-  var pendingRemove = null, pendingTimer = null, pendingReset = false, resetTimer = null;
-  var outMode = null;
+  var sid = null;
+  var mon = cur.slice(0, 7);
+  var pendingPerson = null, pendingSes = null, pendingReset = false, pendingTimer = null;
 
-  function $(id) { return document.getElementById(id); }
-  function dayRecs() { return state.records[cur] || (state.records[cur] = {}); }
-  function getRec(id) { var r = state.records[cur]; return (r && r[id]) || null; }
-  function statusOf(id) { var r = getRec(id); return r ? r.s : 'belum'; }
+  /* Pilih sesi permulaan. Hanya cadangan kasar mengikut jam, boleh ditukar bila-bila masa. */
+  function pick() {
+    var ss = state.sessions;
+    if (!ss.length) return null;
+    if (cur === todayStr) {
+      var n = new Date(), m = n.getHours() * 60 + n.getMinutes();
+      var name = m < 480 ? 'Subuh' : m < 960 ? 'Zuhur' : m < 1155 ? 'Asar' : m < 1230 ? 'Maghrib' : 'Isyak';
+      for (var i = 0; i < ss.length; i++) if (ss[i].name === name) return ss[i].id;
+    }
+    return ss[0].id;
+  }
+  function curSession() {
+    for (var i = 0; i < state.sessions.length; i++) if (state.sessions[i].id === sid) return state.sessions[i];
+    return null;
+  }
+  function ensureSid() { if (!curSession()) sid = pick(); }
+  ensureSid();
 
-  function counts() {
+  function statusOn(date, s, p) {
+    var d = state.records[date];
+    return (d && d[s] && d[s][p]) || 'belum';
+  }
+  function st(s, p) { return statusOn(cur, s, p); }
+  function sessionCounts(s) {
     var c = { hadir: 0, tiada: 0, cuti: 0, belum: 0 };
-    state.people.forEach(function (p) { c[statusOf(p.id)]++; });
+    state.people.forEach(function (p) { c[st(s, p.id)]++; });
     return c;
   }
+  function clearPending() { pendingPerson = null; pendingSes = null; pendingReset = false; }
+  function armPending() { clearTimeout(pendingTimer); pendingTimer = setTimeout(function () { clearPending(); renderAll(); }, 3500); }
 
   function renderHead() {
     $('dateLong').textContent = longDate(cur) + (cur === todayStr ? ' (hari ini)' : '');
@@ -315,12 +380,23 @@ button { cursor: pointer; }
     $('today').disabled = cur === todayStr;
   }
 
+  function renderTabs() {
+    var total = state.people.length;
+    $('tabs').innerHTML = state.sessions.map(function (s) {
+      var c = sessionCounts(s.id), marked = total - c.belum;
+      var done = total > 0 && marked === total;
+      return '<button type="button" class="tab' + (done ? ' done' : '') + '" data-sid="' + s.id + '" aria-pressed="' + (s.id === sid) + '">' +
+        esc(s.name) + '<small>' + (done ? 'lengkap' : marked + '/' + total) + '</small></button>';
+    }).join('');
+  }
+
   function renderSummary() {
-    var c = counts(), total = state.people.length;
-    var marked = total - c.belum;
-    var rate = marked ? Math.round((c.hadir / marked) * 100) : 0;
-    $('rate').textContent = rate + '%';
-    $('sumLine').textContent = marked + ' daripada ' + total + ' sudah ditanda';
+    var s = curSession(), total = state.people.length;
+    if (!s) { $('big').textContent = '0 / 0'; $('bigLabel').textContent = 'hadir'; $('sumLine').textContent = ''; $('bar').innerHTML = ''; $('stats').innerHTML = ''; return; }
+    var c = sessionCounts(s.id);
+    $('big').textContent = c.hadir + ' / ' + total;
+    $('bigLabel').textContent = 'hadir pada ' + s.name;
+    $('sumLine').textContent = c.belum ? c.belum + ' belum ditanda' : (total ? 'Semua sudah ditanda' : '');
     var order = ['hadir', 'tiada', 'cuti', 'belum'];
     var bar = '', stats = '';
     order.forEach(function (k) {
@@ -332,166 +408,257 @@ button { cursor: pointer; }
     $('stats').innerHTML = stats;
   }
 
-  function renderChips() {
-    var c = counts();
-    var items = [['semua', 'Semua', state.people.length], ['belum', 'Belum ditanda', c.belum], ['hadir', 'Hadir', c.hadir], ['tiada', 'Tidak hadir', c.tiada], ['cuti', 'Cuti', c.cuti]];
-    $('chips').innerHTML = items.map(function (x) {
-      return '<button type="button" class="chip" data-f="' + x[0] + '" aria-pressed="' + (filter === x[0]) + '">' + x[1] + ' ' + x[2] + '</button>';
-    }).join('');
-  }
-
   function renderList() {
-    var q = query.trim().toLowerCase();
-    var rows = state.people.filter(function (p) {
-      if (filter !== 'semua' && statusOf(p.id) !== filter) return false;
-      if (q && (p.name + ' ' + (p.group || '')).toLowerCase().indexOf(q) < 0) return false;
-      return true;
-    });
-    if (!rows.length) {
-      $('list').innerHTML = '<li class="empty">' + (state.people.length ? 'Tiada nama sepadan dengan carian atau penapis ini.' : 'Senarai kosong. Tambah nama pertama di bahagian bawah.') + '</li>';
+    if (!state.people.length) {
+      $('list').innerHTML = '<li class="empty">Senarai kosong. Tambah nama imam atau bilal di bahagian bawah.</li>';
       return;
     }
-    $('list').innerHTML = rows.map(function (p) {
-      var r = getRec(p.id), s = r ? r.s : 'belum';
-      var seg = STATUS.map(function (st) {
-        return '<button type="button" data-act="set" data-k="' + st.k + '" aria-pressed="' + (s === st.k) + '">' + st.l + '</button>';
+    $('list').innerHTML = state.people.map(function (p) {
+      var s = sid ? st(sid, p.id) : 'belum';
+      var seg = STATUS.map(function (x) {
+        return '<button type="button" data-act="set" data-k="' + x.k + '" aria-pressed="' + (s === x.k) + '">' + x.l + '</button>';
       }).join('');
-      var tm = (s === 'hadir')
-        ? '<input type="time" data-act="time" value="' + esc(r.t || '') + '" aria-label="Waktu masuk ' + esc(p.name) + '">'
-        : '<span>' + (s === 'belum' ? 'Belum ditanda' : '') + '</span>';
-      var rm = pendingRemove === p.id
+      var rm = pendingPerson === p.id
         ? '<button type="button" class="rm confirm" data-act="rm">Pasti buang?</button>'
         : '<button type="button" class="rm" data-act="rm" aria-label="Buang ' + esc(p.name) + '">Buang</button>';
       return '<li class="row" data-id="' + p.id + '" data-s="' + s + '">' +
         '<div class="who"><span class="av">' + esc(initials(p.name)) + '</span><div><div class="nm">' + esc(p.name) + '</div>' +
         (p.group ? '<div class="gp">' + esc(p.group) + '</div>' : '') + '</div></div>' +
-        '<div class="seg" role="group" aria-label="Status ' + esc(p.name) + '">' + seg + '</div>' +
-        '<div class="tm">' + tm + '</div>' + rm + '</li>';
+        '<div class="seg" role="group" aria-label="Status ' + esc(p.name) + '">' + seg + '</div>' + rm + '</li>';
+    }).join('');
+  }
+
+  function renderMatrix() {
+    if (!state.people.length || !state.sessions.length) { $('matrix').innerHTML = '<p class="hint" style="margin:0;color:var(--muted)">Belum ada data untuk dipaparkan.</p>'; return; }
+    var head = '<thead><tr><th scope="col"></th>' + state.sessions.map(function (s) { return '<th scope="col">' + esc(s.name) + '</th>'; }).join('') + '</tr></thead>';
+    var body = state.people.map(function (p) {
+      return '<tr><th scope="row">' + esc(p.name) + (p.group ? '<small>' + esc(p.group) + '</small>' : '') + '</th>' +
+        state.sessions.map(function (s) {
+          var k = st(s.id, p.id);
+          return '<td><span class="cell" data-s="' + k + '" title="' + esc(s.name + ': ' + LABEL[k]) + '">' + SHORT[k] + '</span></td>';
+        }).join('') + '</tr>';
+    }).join('');
+    $('matrix').innerHTML = '<table class="mx">' + head + '<tbody>' + body + '</tbody></table>';
+  }
+
+  /* Kiraan bulanan: berapa kali setiap orang hadir, tidak hadir atau cuti */
+  function monthStats(m) {
+    var out = {};
+    state.people.forEach(function (p) {
+      var o = { hadir: 0, tiada: 0, cuti: 0, ses: {} };
+      state.sessions.forEach(function (s) { o.ses[s.id] = 0; });
+      out[p.id] = o;
+    });
+    Object.keys(state.records).forEach(function (date) {
+      if (date.indexOf(m) !== 0) return;
+      var d = state.records[date];
+      state.sessions.forEach(function (s) {
+        var r = d[s.id];
+        if (!r) return;
+        state.people.forEach(function (p) {
+          var k = r[p.id];
+          if (!k || !out[p.id]) return;
+          out[p.id][k]++;
+          if (k === 'hadir') out[p.id].ses[s.id]++;
+        });
+      });
+    });
+    return out;
+  }
+  function monLabel(m) { var p = m.split('-'); return BULAN[+p[1] - 1] + ' ' + p[0]; }
+  function num(n, cls) { return '<td class="' + (cls || '') + (n === 0 ? ' z' : '') + '">' + n + '</td>'; }
+  function renderMonth() {
+    $('monLabel').textContent = monLabel(mon);
+    $('mNow').disabled = mon === todayStr.slice(0, 7);
+    if (!state.people.length || !state.sessions.length) { $('monTable').innerHTML = '<p class="hint" style="margin:0;color:var(--muted)">Belum ada data untuk dipaparkan.</p>'; return; }
+    var stats = monthStats(mon);
+    var head = '<thead><tr><th scope="col"></th>' +
+      state.sessions.map(function (s) { return '<th scope="col">' + esc(s.name) + '</th>'; }).join('') +
+      '<th scope="col" class="tot">Jumlah hadir</th><th scope="col">Tidak hadir</th><th scope="col">Cuti</th></tr></thead>';
+    var body = state.people.map(function (p) {
+      var o = stats[p.id];
+      return '<tr><th scope="row">' + esc(p.name) + (p.group ? '<small>' + esc(p.group) + '</small>' : '') + '</th>' +
+        state.sessions.map(function (s) { return num(o.ses[s.id]); }).join('') +
+        num(o.hadir, 'tot') + num(o.tiada) + num(o.cuti) + '</tr>';
+    }).join('');
+    $('monTable').innerHTML = '<table class="mx">' + head + '<tbody>' + body + '</tbody></table>';
+  }
+  function monthText() {
+    var stats = monthStats(mon);
+    var lines = ['Kiraan kehadiran ' + monLabel(mon)];
+    state.people.forEach(function (p) {
+      var o = stats[p.id];
+      var per = state.sessions.map(function (s) { return s.name + ' ' + o.ses[s.id]; }).join(', ');
+      lines.push('', p.name + (p.group ? ' (' + p.group + ')' : ''),
+        '  Hadir ' + o.hadir + ' kali (' + per + ')',
+        '  Tidak hadir ' + o.tiada + ', Cuti ' + o.cuti);
+    });
+    return lines.join('\n');
+  }
+  function monShift(n) {
+    var p = mon.split('-'), d = new Date(+p[0], +p[1] - 1 + n, 1);
+    mon = d.getFullYear() + '-' + pad(d.getMonth() + 1);
+    renderMonth();
+  }
+  $('mPrev').addEventListener('click', function () { monShift(-1); });
+  $('mNext').addEventListener('click', function () { monShift(1); });
+  $('mNow').addEventListener('click', function () { mon = todayStr.slice(0, 7); renderMonth(); });
+  $('mkMonSummary').addEventListener('click', function () { openOut('Kiraan ' + monLabel(mon), monthText()); });
+
+  function renderSesList() {
+    $('sesList').innerHTML = state.sessions.map(function (s) {
+      var confirm = pendingSes === s.id;
+      return '<li data-sid="' + s.id + '">' + esc(s.name) + '<button type="button" class="rm' + (confirm ? ' confirm' : '') + '" data-act="rmses">' + (confirm ? 'Pasti buang?' : 'Buang') + '</button></li>';
     }).join('');
   }
 
   function renderAll() {
-    renderHead(); renderSummary(); renderChips(); renderList();
+    ensureSid();
+    renderHead(); renderTabs(); renderSummary(); renderList(); renderMatrix(); renderMonth(); renderSesList();
     $('sampleNote').hidden = !state.sample;
-    $('resetDay').textContent = pendingReset ? 'Pasti set semula?' : 'Set semula hari ini';
-    $('resetDay').className = 'btn' + (pendingReset ? ' warn' : '');
+    var s = curSession();
+    $('resetSes').textContent = pendingReset ? 'Pasti set semula?' : 'Set semula ' + (s ? s.name : 'sesi');
+    $('resetSes').className = 'btn' + (pendingReset ? ' warn' : '');
+    $('markAll').disabled = !s || !state.people.length;
   }
 
-  function stamp() { return cur === todayStr ? hm(new Date()) : ''; }
+  /* Tab sesi */
+  $('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-sid]');
+    if (!b) return;
+    sid = b.getAttribute('data-sid'); clearPending(); renderAll();
+  });
 
+  /* Senarai nama */
   $('list').addEventListener('click', function (e) {
     var btn = e.target.closest('[data-act]');
     if (!btn) return;
     var row = btn.closest('.row');
     if (!row) return;
     var id = row.getAttribute('data-id');
-    var act = btn.getAttribute('data-act');
-    if (act === 'set') {
+    if (btn.getAttribute('data-act') === 'set') {
+      if (!sid) return;
       var k = btn.getAttribute('data-k');
-      var recs = dayRecs();
-      if (recs[id] && recs[id].s === k) { delete recs[id]; }
-      else if (k === 'hadir') {
-        var keepT = recs[id] && recs[id].t ? recs[id].t : stamp();
-        recs[id] = { s: k, t: keepT };
-      } else { recs[id] = { s: k, t: '' }; }
+      var d = state.records[cur] || (state.records[cur] = {});
+      var r = d[sid] || (d[sid] = {});
+      if (r[id] === k) delete r[id]; else r[id] = k;
       save(); renderAll();
-    } else if (act === 'rm') {
-      if (pendingRemove === id) {
+    } else if (btn.getAttribute('data-act') === 'rm') {
+      if (pendingPerson === id) {
         state.people = state.people.filter(function (p) { return p.id !== id; });
-        Object.keys(state.records).forEach(function (d) { delete state.records[d][id]; });
-        pendingRemove = null; save();
-      } else {
-        pendingRemove = id;
-        clearTimeout(pendingTimer);
-        pendingTimer = setTimeout(function () { pendingRemove = null; renderList(); }, 3500);
-      }
+        Object.keys(state.records).forEach(function (date) {
+          Object.keys(state.records[date]).forEach(function (s) { delete state.records[date][s][id]; });
+        });
+        pendingPerson = null; save();
+      } else { clearPending(); pendingPerson = id; armPending(); }
       renderAll();
     }
   });
-  $('list').addEventListener('change', function (e) {
-    var inp = e.target.closest('[data-act="time"]');
-    if (!inp) return;
-    var id = inp.closest('.row').getAttribute('data-id');
-    var r = getRec(id);
-    if (r) { r.t = inp.value; save(); }
-  });
 
-  $('chips').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-f]');
-    if (!b) return;
-    filter = b.getAttribute('data-f');
-    renderChips(); renderList();
-  });
-  $('q').addEventListener('input', function (e) { query = e.target.value; renderList(); });
-
-  function shift(n) { var d = parse(cur); d.setDate(d.getDate() + n); cur = ymd(d); pendingReset = false; renderAll(); }
+  /* Navigasi tarikh */
+  function shift(n) { var d = parse(cur); d.setDate(d.getDate() + n); cur = ymd(d); mon = cur.slice(0, 7); clearPending(); renderAll(); }
   $('prev').addEventListener('click', function () { shift(-1); });
   $('next').addEventListener('click', function () { shift(1); });
-  $('today').addEventListener('click', function () { cur = todayStr; pendingReset = false; renderAll(); });
-  $('datePick').addEventListener('change', function (e) { if (e.target.value) { cur = e.target.value; pendingReset = false; renderAll(); } });
+  $('today').addEventListener('click', function () { cur = todayStr; mon = cur.slice(0, 7); sid = pick(); clearPending(); renderAll(); });
+  $('datePick').addEventListener('change', function (e) { if (e.target.value) { cur = e.target.value; mon = cur.slice(0, 7); clearPending(); renderAll(); } });
 
+  /* Tindakan sesi */
   $('markAll').addEventListener('click', function () {
-    var recs = dayRecs(), t = stamp();
-    state.people.forEach(function (p) { if (!recs[p.id]) recs[p.id] = { s: 'hadir', t: t }; });
+    if (!sid) return;
+    var d = state.records[cur] || (state.records[cur] = {});
+    var r = d[sid] || (d[sid] = {});
+    state.people.forEach(function (p) { if (!r[p.id]) r[p.id] = 'hadir'; });
     save(); renderAll();
   });
-  $('resetDay').addEventListener('click', function () {
-    if (pendingReset) { delete state.records[cur]; pendingReset = false; save(); }
-    else {
-      pendingReset = true;
-      clearTimeout(resetTimer);
-      resetTimer = setTimeout(function () { pendingReset = false; renderAll(); }, 3500);
-    }
+  $('resetSes').addEventListener('click', function () {
+    if (pendingReset) {
+      if (state.records[cur] && sid) delete state.records[cur][sid];
+      clearPending(); save();
+    } else { clearPending(); pendingReset = true; armPending(); }
     renderAll();
   });
   $('clearSample').addEventListener('click', function () {
-    state = { sample: false, records: {}, people: [] };
+    state.people = []; state.records = {}; state.sample = false;
     save(); renderAll();
   });
 
+  /* Tambah nama */
   $('addForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var name = $('newName').value.trim();
     if (!name) return;
-    if (state.sample && state.people.length) { /* kekalkan contoh sehingga dikosongkan */ }
     state.people.push({ id: uid(), name: name, group: $('newGroup').value.trim() });
     $('newName').value = '';
     save(); renderAll();
     $('newName').focus();
   });
 
-  /* Ringkasan dan CSV */
+  /* Urus sesi */
+  $('sesForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('newSes').value.trim();
+    if (!name) return;
+    var s = { id: uid(), name: name };
+    state.sessions.push(s);
+    sid = s.id; $('newSes').value = ''; $('sesMsg').textContent = '';
+    save(); renderAll();
+  });
+  $('sesList').addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-act="rmses"]');
+    if (!btn) return;
+    var id = btn.closest('li').getAttribute('data-sid');
+    if (state.sessions.length <= 1) { $('sesMsg').textContent = 'Sekurang-kurangnya satu sesi diperlukan.'; return; }
+    $('sesMsg').textContent = '';
+    if (pendingSes === id) {
+      state.sessions = state.sessions.filter(function (s) { return s.id !== id; });
+      Object.keys(state.records).forEach(function (date) { delete state.records[date][id]; });
+      pendingSes = null; sid = pick(); save();
+    } else { clearPending(); pendingSes = id; armPending(); }
+    renderAll();
+  });
+
+  /* Output teks dan CSV */
   function summaryText() {
-    var c = counts(), total = state.people.length;
-    var lines = ['Kedatangan ' + longDate(cur), 'Jumlah: ' + total,
-      'Hadir: ' + c.hadir + ' | Tidak hadir: ' + c.tiada + ' | Cuti: ' + c.cuti + ' | Belum ditanda: ' + c.belum];
-    [['tiada', 'Tidak hadir'], ['cuti', 'Cuti'], ['belum', 'Belum ditanda']].forEach(function (g) {
-      var names = state.people.filter(function (p) { return statusOf(p.id) === g[0]; }).map(function (p) {
-        return p.name;
+    var lines = ['Kehadiran imam dan bilal', longDate(cur), 'Jumlah nama: ' + state.people.length];
+    state.sessions.forEach(function (s) {
+      var c = sessionCounts(s.id);
+      lines.push('', s.name + ': Hadir ' + c.hadir + ', Tidak hadir ' + c.tiada + ', Cuti ' + c.cuti + ', Belum ditanda ' + c.belum);
+      [['tiada', 'Tidak hadir'], ['cuti', 'Cuti'], ['belum', 'Belum ditanda']].forEach(function (g) {
+        var names = state.people.filter(function (p) { return st(s.id, p.id) === g[0]; }).map(function (p) { return p.name + (p.group ? ' (' + p.group + ')' : ''); });
+        if (names.length) lines.push('  ' + g[1] + ': ' + names.join('; '));
       });
-      if (names.length) { lines.push('', g[1] + ':'); names.forEach(function (n) { lines.push('- ' + n); }); }
     });
     return lines.join('\n');
   }
   function csvCell(v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
-  function csvText() {
-    var rows = [['Tarikh', 'Nama', 'Kumpulan', 'Status', 'Waktu masuk']];
-    state.people.forEach(function (p) {
-      var r = getRec(p.id);
-      rows.push([cur, p.name, p.group || '', LABEL[r ? r.s : 'belum'], r && r.t ? r.t : '']);
+  function csvRows(dates) {
+    var rows = [['Tarikh', 'Sesi', 'Nama', 'Jawatan', 'Status']];
+    dates.forEach(function (date) {
+      state.sessions.forEach(function (s) {
+        state.people.forEach(function (p) {
+          rows.push([date, s.name, p.name, p.group || '', LABEL[statusOn(date, s.id, p.id)]]);
+        });
+      });
     });
     return rows.map(function (r) { return r.map(csvCell).join(','); }).join('\n');
   }
-  function openOut(mode) {
-    outMode = mode;
-    $('outTitle').textContent = mode === 'csv' ? 'Data CSV' : 'Ringkasan';
-    $('outText').value = mode === 'csv' ? csvText() : summaryText();
+  function monthDates() {
+    var pre = cur.slice(0, 7);
+    return Object.keys(state.records).filter(function (d) { return d.indexOf(pre) === 0; }).sort();
+  }
+  function openOut(title, text) {
+    $('outTitle').textContent = title;
+    $('outText').value = text;
     $('toast').textContent = '';
     $('out').hidden = false;
     $('out').scrollIntoView({ block: 'nearest' });
   }
-  $('mkSummary').addEventListener('click', function () { openOut('ringkasan'); });
-  $('mkCsv').addEventListener('click', function () { openOut('csv'); });
+  $('mkSummary').addEventListener('click', function () { openOut('Ringkasan hari', summaryText()); });
+  $('mkCsv').addEventListener('click', function () { openOut('CSV ' + cur, csvRows([cur])); });
+  $('mkCsvMonth').addEventListener('click', function () {
+    var ds = monthDates();
+    openOut('CSV ' + BULAN[parse(cur).getMonth()] + ' ' + parse(cur).getFullYear(), ds.length ? csvRows(ds) : 'Tiada rekod untuk bulan ini.');
+  });
   $('closeOut').addEventListener('click', function () { $('out').hidden = true; });
   $('copyBtn').addEventListener('click', function () {
     var ta = $('outText'), t = $('toast');
@@ -501,14 +668,11 @@ button { cursor: pointer; }
     } catch (e) { fallback(); }
   });
 
-  /* Jam */
-  function tick() {
-    var now = new Date();
-    $('clockVal').textContent = hm(now);
-    var s = ymd(now);
-    if (s !== todayStr) { var wasToday = cur === todayStr; todayStr = s; if (wasToday) cur = s; renderAll(); }
-  }
-  tick(); setInterval(tick, 15000);
+  /* Tukar hari secara automatik selepas tengah malam */
+  setInterval(function () {
+    var s = ymd(new Date());
+    if (s !== todayStr) { var wasToday = cur === todayStr; todayStr = s; if (wasToday) { cur = s; mon = s.slice(0, 7); sid = pick(); } renderAll(); }
+  }, 60000);
 
   renderAll();
 })();

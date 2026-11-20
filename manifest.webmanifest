@@ -1,7 +1,7 @@
 {
   "name": "Rekod Kedatangan",
   "short_name": "Kedatangan",
-  "description": "Tanda kehadiran harian: hadir, tidak hadir atau cuti.",
+  "description": "Rekod kehadiran imam dan bilal mengikut waktu solat.",
   "lang": "ms",
   "start_url": "./",
   "scope": "./",
