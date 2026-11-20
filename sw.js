@@ -1,8 +1,12 @@
-const CACHE = 'kedatangan-v3';
+const CACHE = 'kedatangan-v4';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
-  e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
+  e.waitUntil(
+    caches.open(CACHE).then(function (c) {
+      return Promise.all(FILES.map(function (f) { return c.add(new Request(f, { cache: 'reload' })); }));
+    }).then(function () { return self.skipWaiting(); })
+  );
 });
 
 self.addEventListener('activate', function (e) {
@@ -18,6 +22,17 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  if (req.mode === 'navigate') {
+    /* Halaman utama: cuba rangkaian dahulu supaya versi baharu terus muncul. Guna salinan simpanan bila tiada internet. */
+    e.respondWith(
+      fetch(req, { cache: 'no-cache' }).then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put('index.html', copy); });
+        return res;
+      }).catch(function () { return caches.match('index.html'); })
+    );
+    return;
+  }
   e.respondWith(
     caches.match(req).then(function (hit) {
       if (hit) return hit;
@@ -25,8 +40,6 @@ self.addEventListener('fetch', function (e) {
         var copy = res.clone();
         caches.open(CACHE).then(function (c) { c.put(req, copy); });
         return res;
-      }).catch(function () {
-        if (req.mode === 'navigate') return caches.match('index.html');
       });
     })
   );
