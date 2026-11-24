@@ -266,7 +266,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
       <button class="btn" id="mNow" type="button">Bulan ini</button>
     </div>
     <div class="mx-wrap" id="monTable"></div>
-    <p class="hint">Setiap angka ialah hadir per jumlah waktu bertugas. Dikira dari awal bulan atau minggu hingga hari ini, jadi rekod yang tertinggal boleh diisi kemudian. Minggu bermula pada hari Isnin.</p>
+    <p class="hint">Setiap angka ialah hadir per jumlah waktu bertugas. Dikira dari awal bulan atau minggu hingga hari ini, jadi rekod yang tertinggal boleh diisi kemudian. Minggu bermula pada hari Ahad dan berakhir pada hari Sabtu.</p>
     <div class="actions">
       <button class="btn" id="mkMonSummary" type="button">Kiraan sebagai teks</button>
       <button class="btn" id="mkMonCsv" type="button">Kiraan CSV</button>
@@ -479,7 +479,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   function periodRange(kind, anchor) {
     var d = parse(anchor), a, b;
     if (kind === 'minggu') {
-      var off = (d.getDay() + 6) % 7; /* Isnin = 0 */
+      var off = d.getDay(); /* Ahad = 0 */
       a = new Date(d.getFullYear(), d.getMonth(), d.getDate() - off);
       b = new Date(a.getFullYear(), a.getMonth(), a.getDate() + 6);
     } else {
@@ -493,6 +493,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     if (kind === 'bulan') return BULAN[a.getMonth()] + ' ' + a.getFullYear();
     return a.getDate() + (a.getMonth() !== b.getMonth() ? ' ' + BULAN[a.getMonth()].slice(0, 3) : '') + ' \u2013 ' + b.getDate() + ' ' + BULAN[b.getMonth()].slice(0, 3) + ' ' + b.getFullYear();
   }
+  function dmy(s) { var d = parse(s); return d.getDate() + ' ' + BULAN[d.getMonth()] + ' ' + d.getFullYear(); }
   function pct(h, t) { return t ? Math.round(h / t * 100) + '%' : '\u2013'; }
   /* Jumlah = waktu yang dijadualkan sejak awal bulan atau minggu hingga hari ini, atau yang dihadiri walaupun tiada dalam jadual. */
   function periodStats(kind, anchor) {
@@ -720,7 +721,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     var res = periodStats(per, pa);
     var to = res.range.end < todayStr ? res.range.end : todayStr;
     $('phLabel').textContent = (per === 'minggu' ? 'Minggu ' : 'Bulan ') + periodLabel(per, res.range);
-    $('phNote').textContent = res.days ? 'Dikira sehingga ' + longDate(to) + '. Hadir per jumlah waktu bertugas.' : 'Tempoh ini belum bermula.';
+    $('phNote').textContent = res.days ? 'Dikira dari ' + dmy(res.range.start) + ' hingga ' + dmy(to) + '.' : 'Tempoh ini belum bermula.';
     $('pdfMsg').textContent = 'Pada dialog cetak, pilih "Save as PDF" atau "Simpan sebagai PDF". Jika dialog tidak muncul, buka app daripada tapak web atau skrin utama hp, bukan daripada pratonton.';
     document.body.classList.add('print-kiraan');
     function done() { document.body.classList.remove('print-kiraan'); window.removeEventListener('afterprint', done); }
