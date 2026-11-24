@@ -250,11 +250,6 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     <h2 id="matTitle">Gambaran hari ini</h2>
     <div class="mx-wrap" id="matrix"></div>
     <div class="legend"><span>&#10003; = Hadir</span><span>&ndash; = Belum ditanda</span><span>&middot; = Tidak dijadualkan</span></div>
-    <div class="actions">
-      <button class="btn" id="mkSummary" type="button">Ringkasan teks</button>
-      <button class="btn" id="mkCsv" type="button">CSV hari ini</button>
-      <button class="btn" id="mkCsvMonth" type="button">CSV rekod bulan ini</button>
-    </div>
   </section>
 
   <section class="panel" id="kiraan">
@@ -712,37 +707,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   });
 
   /* Output teks dan CSV */
-  function summaryText() {
-    var lines = ['Kehadiran imam dan bilal', longDate(cur)];
-    state.sessions.forEach(function (s) {
-      var c = sessionCounts(s.id);
-      if (!c.total) { lines.push('', s.name + ': tiada jadual'); return; }
-      lines.push('', s.name + ': ' + c.hadir + '/' + c.total + ' hadir');
-      var h = c.list.filter(function (p) { return hd(s.id, p.id); }).map(function (p) { return p.name + (p.group ? ' (' + p.group + ')' : ''); });
-      var b = c.list.filter(function (p) { return !hd(s.id, p.id); }).map(function (p) { return p.name + (p.group ? ' (' + p.group + ')' : ''); });
-      if (h.length) lines.push('  Hadir: ' + h.join('; '));
-      if (b.length) lines.push('  Belum ditanda: ' + b.join('; '));
-    });
-    return lines.join('\n');
-  }
   function csvCell(v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
-  function csvRows(dates) {
-    var rows = [['Tarikh', 'Sesi', 'Nama', 'Jawatan', 'Status']];
-    dates.forEach(function (date) {
-      state.sessions.forEach(function (s) {
-        state.people.forEach(function (p) {
-          var h = hadirOn(date, s.id, p.id);
-          if (!h && !isAss(p, s.id)) return;
-          rows.push([date, s.name, p.name, p.group || '', h ? 'Hadir' : 'Belum ditanda']);
-        });
-      });
-    });
-    return rows.map(function (r) { return r.map(csvCell).join(','); }).join('\n');
-  }
-  function monthDates() {
-    var pre = cur.slice(0, 7);
-    return Object.keys(state.records).filter(function (d) { return d.indexOf(pre) === 0; }).sort();
-  }
   function openOut(title, text) {
     $('outTitle').textContent = title;
     $('outText').value = text;
@@ -750,12 +715,6 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     $('out').hidden = false;
     $('out').scrollIntoView({ block: 'nearest' });
   }
-  $('mkSummary').addEventListener('click', function () { openOut('Ringkasan hari', summaryText()); });
-  $('mkCsv').addEventListener('click', function () { openOut('CSV ' + cur, csvRows([cur])); });
-  $('mkCsvMonth').addEventListener('click', function () {
-    var ds = monthDates();
-    openOut('CSV ' + monLabel(cur.slice(0, 7)), ds.length ? csvRows(ds) : 'Tiada rekod untuk bulan ini.');
-  });
   $('mkMonSummary').addEventListener('click', function () { openOut('Kiraan ' + periodLabel(per, periodRange(per, pa)), periodText()); });
   $('mkMonPdf').addEventListener('click', function () {
     var res = periodStats(per, pa);
