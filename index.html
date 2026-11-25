@@ -173,17 +173,28 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
 .pers button:first-child { border-left: 0; }
 .pers button:hover { background: var(--surface-2); }
 .pers button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+@media (max-width: 480px) {
+  .nav { flex-wrap: nowrap; gap: 6px; }
+  .nav .lbl { display: none; }
+  .nav .btn { padding: 7px 11px; }
+  .nav input[type="date"] { flex: 1 1 auto; min-width: 0; padding: 6px 6px; font-size: 0.88rem; }
+  .mon-nav { gap: 6px; }
+  .mon-nav .btn { padding: 7px 9px; }
+  .mon-nav strong { min-width: 0; font-size: 0.86rem; }
+}
 @media (max-width: 640px) {
   .add, .add.one { grid-template-columns: 1fr; }
   .top h1 { font-size: 1.5rem; }
   .tog { min-width: 7rem; }
-  .tabs { gap: 4px; }
+  .tabs { gap: 3px; }
+  .tab { min-width: 3.2rem; padding: 8px 1px; font-size: 0.78rem; }
   table.mx th, table.mx td { padding: 8px 3px; }
   table.mx th[scope="row"] { min-width: 5.5rem; font-size: 0.8rem; }
   table.mx thead th { font-size: 0.68rem; padding-left: 1px; padding-right: 1px; }
   table.mx thead th.tot { white-space: normal; }
   .cell { width: 24px; height: 24px; }
 }
+.chk { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
 .print-head { display: none; }
 @media print {
   @page { size: A4; margin: 14mm; }
@@ -217,9 +228,9 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   </header>
 
   <div class="nav">
-    <button class="btn" id="prev" type="button" aria-label="Hari sebelum">&larr; Sebelum</button>
+    <button class="btn" id="prev" type="button" aria-label="Hari sebelum">&larr;<span class="lbl"> Sebelum</span></button>
     <input type="date" id="datePick" aria-label="Pilih tarikh">
-    <button class="btn" id="next" type="button" aria-label="Hari seterusnya">Seterusnya &rarr;</button>
+    <button class="btn" id="next" type="button" aria-label="Hari seterusnya"><span class="lbl">Seterusnya </span>&rarr;</button>
     <button class="btn" id="today" type="button">Hari ini</button>
   </div>
 
@@ -266,7 +277,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
       <button class="btn" id="mNow" type="button">Bulan ini</button>
     </div>
     <div class="mx-wrap" id="monTable"></div>
-    <p class="hint">Setiap angka ialah hadir per jumlah waktu bertugas. Dikira dari awal bulan atau minggu hingga hari ini, jadi rekod yang tertinggal boleh diisi kemudian. Minggu bermula pada hari Ahad dan berakhir pada hari Sabtu.</p>
+    <p class="hint">Setiap angka ialah hadir per jumlah waktu bertugas. Dikira dari awal bulan atau minggu hingga hari ini, jadi rekod yang tertinggal boleh diisi kemudian. Minggu bermula pada hari Ahad dan berakhir pada hari Sabtu. Sesi Jumaat dipaparkan tetapi tidak dikira dalam Hadir / Jumlah dan Peratus.</p>
     <div class="actions">
       <button class="btn" id="mkMonSummary" type="button">Kiraan sebagai teks</button>
       <button class="btn" id="mkMonCsv" type="button">Kiraan CSV</button>
@@ -287,7 +298,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
 
   <section class="panel">
     <h2>Jadual imam dan bilal</h2>
-    <p class="hint">Tanda waktu solat yang menjadi tugas setiap orang. Dalam setiap sesi, hanya yang dijadualkan akan muncul untuk ditanda hadir.</p>
+    <p class="hint">Tanda waktu solat yang menjadi tugas setiap orang. Dalam setiap sesi, hanya yang dijadualkan akan muncul untuk ditanda hadir. Sesi Jumaat hanya muncul pada hari Jumaat.</p>
     <div class="mx-wrap" id="sched"></div>
     <form class="add" id="addForm" autocomplete="off">
       <input id="newName" type="text" placeholder="Nama penuh" required aria-label="Nama penuh">
@@ -300,12 +311,13 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
 
   <details class="panel">
     <summary>Urus sesi solat</summary>
-    <p class="hint">Lima waktu solat sudah disediakan. Sesi baharu, seperti Jumaat atau Tarawih, bermula tanpa sesiapa dijadualkan. Tandakan namanya di jadual di atas.</p>
+    <p class="hint">Lima waktu solat dan sesi Jumaat sudah disediakan. Sesi Jumaat hanya muncul pada hari Jumaat. Sesi baharu, seperti Tarawih, bermula tanpa sesiapa dijadualkan. Tandakan namanya di jadual di atas.</p>
     <ul class="slist" id="sesList"></ul>
     <form class="add one" id="sesForm" autocomplete="off">
       <input id="newSes" type="text" placeholder="Nama sesi baharu" required aria-label="Nama sesi baharu">
       <button class="btn primary" type="submit">Tambah sesi</button>
     </form>
+    <label class="chk"><input type="checkbox" class="ck" id="newSesJum"> Sesi ini hanya pada hari Jumaat</label>
     <span class="toast" id="sesMsg" role="status" aria-live="polite" style="color: var(--danger)"></span>
   </details>
 </div>
@@ -330,18 +342,18 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   function $(id) { return document.getElementById(id); }
 
   function seed() {
-    var sessions = ['Subuh', 'Zuhur', 'Asar', 'Maghrib', 'Isyak'].map(function (n) { return { id: uid(), name: n }; });
+    var sessions = ['Subuh', 'Zuhur', 'Jumaat', 'Asar', 'Maghrib', 'Isyak'].map(function (n) { var s = { id: uid(), name: n }; if (n === 'Jumaat') s.hari = 5; return s; });
     function ids(names) {
       return sessions.filter(function (s) { return names.indexOf(s.name) >= 0; }).map(function (s) { return s.id; });
     }
     var ppl = [
-      ['Ustaz Ahmad Zaki bin Hasan', 'Imam', ['Subuh', 'Zuhur']],
+      ['Ustaz Ahmad Zaki bin Hasan', 'Imam', ['Subuh', 'Zuhur', 'Jumaat']],
       ['Ustaz Mohd Rizal bin Ismail', 'Imam', ['Asar', 'Maghrib', 'Isyak']],
-      ['Encik Abdul Rahman bin Salleh', 'Bilal', ['Subuh', 'Zuhur', 'Asar']],
+      ['Encik Abdul Rahman bin Salleh', 'Bilal', ['Subuh', 'Zuhur', 'Jumaat', 'Asar']],
       ['Encik Kamarul bin Yusof', 'Bilal', ['Maghrib', 'Isyak']]
     ];
     return {
-      sample: true, records: {}, sessions: sessions,
+      sample: true, jumaat: true, records: {}, sessions: sessions,
       people: ppl.map(function (x) { return { id: uid(), name: x[0], group: x[1], ses: ids(x[2]) }; })
     };
   }
@@ -355,6 +367,18 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
         Object.keys(r).forEach(function (pid) { if (r[pid] !== 'hadir') delete r[pid]; });
       });
     });
+    /* Sesi Jumaat: ditambah sekali sahaja, hanya muncul pada hari Jumaat. */
+    if (!o.jumaat) {
+      var jm = null;
+      o.sessions.forEach(function (s) { if (s.name.trim().toLowerCase() === 'jumaat') jm = s; });
+      if (jm) { if (jm.hari == null) jm.hari = 5; }
+      else {
+        var zi = -1;
+        o.sessions.forEach(function (s, i) { if (s.name === 'Zuhur') zi = i; });
+        o.sessions.splice(zi >= 0 ? zi + 1 : o.sessions.length, 0, { id: uid(), name: 'Jumaat', hari: 5 });
+      }
+      o.jumaat = true;
+    }
     return o;
   }
   function load() {
@@ -372,6 +396,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   }
   var state = load() || seed();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+  save();
 
   var todayStr = ymd(new Date());
   var cur = todayStr;
@@ -382,17 +407,21 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
 
   /* Sesi permulaan ialah cadangan kasar mengikut jam. Boleh ditukar bila-bila masa. */
   function pick() {
-    var ss = state.sessions;
+    var ss = visible(cur);
     if (!ss.length) return null;
     if (cur === todayStr) {
       var n = new Date(), m = n.getHours() * 60 + n.getMinutes();
       var name = m < 480 ? 'Subuh' : m < 960 ? 'Zuhur' : m < 1155 ? 'Asar' : m < 1230 ? 'Maghrib' : 'Isyak';
+      if (name === 'Zuhur' && ss.some(function (s) { return s.name === 'Jumaat'; })) name = 'Jumaat';
       for (var i = 0; i < ss.length; i++) if (ss[i].name === name) return ss[i].id;
     }
     return ss[0].id;
   }
+  function activeOn(s, date) { return s.hari == null || parse(date).getDay() === s.hari; }
+  function visible(date) { return state.sessions.filter(function (s) { return activeOn(s, date); }); }
   function curSession() {
-    for (var i = 0; i < state.sessions.length; i++) if (state.sessions[i].id === sid) return state.sessions[i];
+    var vs = visible(cur);
+    for (var i = 0; i < vs.length; i++) if (vs[i].id === sid) return vs[i];
     return null;
   }
   function ensureSid() { if (!curSession()) sid = pick(); }
@@ -419,7 +448,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   }
 
   function renderTabs() {
-    $('tabs').innerHTML = state.sessions.map(function (s) {
+    $('tabs').innerHTML = visible(cur).map(function (s) {
       var c = sessionCounts(s.id);
       var done = c.total > 0 && c.belum === 0;
       var small = !c.total ? 'kosong' : done ? 'lengkap' : c.hadir + '/' + c.total;
@@ -461,10 +490,10 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
 
   function renderMatrix() {
     if (!state.people.length || !state.sessions.length) { $('matrix').innerHTML = '<p class="hint" style="margin:0">Belum ada data untuk dipaparkan.</p>'; return; }
-    var head = '<thead><tr><th scope="col"></th>' + state.sessions.map(function (s) { return '<th scope="col">' + esc(s.name) + '</th>'; }).join('') + '</tr></thead>';
+    var head = '<thead><tr><th scope="col"></th>' + visible(cur).map(function (s) { return '<th scope="col">' + esc(s.name) + '</th>'; }).join('') + '</tr></thead>';
     var body = state.people.map(function (p) {
       return '<tr><th scope="row">' + esc(p.name) + (p.group ? '<small>' + esc(p.group) + '</small>' : '') + '</th>' +
-        state.sessions.map(function (s) {
+        visible(cur).map(function (s) {
           var a = isAss(p, s.id), h = hd(s.id, p.id);
           var k = h ? 'hadir' : a ? 'belum' : 'none';
           var t = h ? 'Hadir' : a ? 'Belum ditanda' : 'Tidak dijadualkan';
@@ -512,9 +541,11 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
       days++;
       state.people.forEach(function (p) {
         state.sessions.forEach(function (s) {
+          if (!activeOn(s, ds)) return;
           var h = hadirOn(ds, s.id, p.id), c = out[p.id].ses[s.id];
-          if (h) { c.h++; out[p.id].hadir++; }
-          if (h || isAss(p, s.id)) { c.t++; out[p.id].total++; }
+          var cnt = s.hari == null; /* sesi khas Jumaat dipaparkan tetapi tidak dikira dalam jumlah */
+          if (h) { c.h++; if (cnt) out[p.id].hadir++; }
+          if (h || isAss(p, s.id)) { c.t++; if (cnt) out[p.id].total++; }
         });
       });
       d.setDate(d.getDate() + 1);
@@ -583,10 +614,11 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     $('sched').innerHTML = '<table class="mx">' + head + '<tbody>' + body + '</tbody></table>';
   }
 
+  function sesNote(msg, info) { var e = $('sesMsg'); e.style.color = info ? 'var(--muted)' : 'var(--danger)'; e.textContent = msg; }
   function renderSesList() {
     $('sesList').innerHTML = state.sessions.map(function (s) {
       var confirm = pendingSes === s.id;
-      return '<li data-sid="' + s.id + '">' + esc(s.name) + '<button type="button" class="rm' + (confirm ? ' confirm' : '') + '" data-act="rmses">' + (confirm ? 'Pasti buang?' : 'Buang') + '</button></li>';
+      return '<li data-sid="' + s.id + '">' + esc(s.name) + (s.hari === 5 ? ' <small style="color:var(--muted)">(hari Jumaat sahaja)</small>' : '') + '<button type="button" class="rm' + (confirm ? ' confirm' : '') + '" data-act="rmses">' + (confirm ? 'Pasti buang?' : 'Buang') + '</button></li>';
     }).join('');
   }
 
@@ -688,16 +720,18 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     var name = $('newSes').value.trim();
     if (!name) return;
     var s = { id: uid(), name: name };
+    if ($('newSesJum').checked) s.hari = 5;
     state.sessions.push(s);
-    sid = s.id; $('newSes').value = ''; $('sesMsg').textContent = '';
+    sid = s.id; $('newSes').value = ''; $('newSesJum').checked = false;
+    sesNote(s.hari != null ? 'Sesi ' + name + ' akan muncul pada hari Jumaat sahaja.' : '', true);
     save(); renderAll();
   });
   $('sesList').addEventListener('click', function (e) {
     var btn = e.target.closest('[data-act="rmses"]');
     if (!btn) return;
     var id = btn.closest('li').getAttribute('data-sid');
-    if (state.sessions.length <= 1) { $('sesMsg').textContent = 'Sekurang-kurangnya satu sesi diperlukan.'; return; }
-    $('sesMsg').textContent = '';
+    if (state.sessions.length <= 1) { sesNote('Sekurang-kurangnya satu sesi diperlukan.', false); return; }
+    sesNote('', true);
     if (pendingSes === id) {
       state.sessions = state.sessions.filter(function (s) { return s.id !== id; });
       state.people.forEach(function (p) { var i = p.ses.indexOf(id); if (i >= 0) p.ses.splice(i, 1); });
@@ -756,10 +790,15 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   $('perMinggu').addEventListener('click', function () { per = 'minggu'; renderPeriod(); });
 
   /* Tukar hari secara automatik selepas tengah malam */
-  setInterval(function () {
+  function checkDay() {
     var s = ymd(new Date());
     if (s !== todayStr) { var wasToday = cur === todayStr; todayStr = s; if (wasToday) { cur = s; pa = s; sid = pick(); } renderAll(); }
-  }, 60000);
+  }
+  setInterval(checkDay, 60000);
+  /* Semak terus bila app dibuka semula daripada latar belakang, supaya tarikh dan jumlah tidak tertinggal. */
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) checkDay(); });
+  window.addEventListener('pageshow', checkDay);
+  window.addEventListener('focus', checkDay);
 
   renderAll();
 })();
