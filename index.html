@@ -194,6 +194,16 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   table.mx thead th.tot { white-space: normal; }
   .cell { width: 24px; height: 24px; }
 }
+.acts { display: flex; flex-direction: column; align-items: stretch; gap: 4px; }
+.lnk { border: 0; background: transparent; color: var(--muted); font-size: 0.8rem; text-decoration: underline; padding: 2px; }
+.lnk:hover { color: var(--fg); }
+.row[data-g="1"] .av { background: var(--accent); color: var(--accent-fg); }
+.gnt { font-size: 0.85rem; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.pillh { font-weight: 600; color: var(--hadir); }
+.row.gpick { grid-template-columns: 1fr; background: var(--surface-2); }
+.gpick .grow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.gpick select { flex: 1 1 10rem; min-width: 0; border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 10px; }
+.cell[data-s="ganti"] { background: var(--accent); color: var(--accent-fg); }
 .chk { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
 .print-head { display: none; }
 @media print {
@@ -260,7 +270,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   <section class="panel">
     <h2 id="matTitle">Gambaran hari ini</h2>
     <div class="mx-wrap" id="matrix"></div>
-    <div class="legend"><span>&#10003; = Hadir</span><span>&ndash; = Belum ditanda</span><span>&middot; = Tidak dijadualkan</span></div>
+    <div class="legend"><span>&#10003; = Hadir</span><span>&ndash; = Belum ditanda</span><span>G = Diganti</span><span>&middot; = Tidak dijadualkan</span></div>
   </section>
 
   <section class="panel" id="kiraan">
@@ -277,7 +287,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
       <button class="btn" id="mNow" type="button">Bulan ini</button>
     </div>
     <div class="mx-wrap" id="monTable"></div>
-    <p class="hint">Setiap angka ialah hadir per jumlah waktu bertugas. Dikira dari awal bulan atau minggu hingga hari ini, jadi rekod yang tertinggal boleh diisi kemudian. Minggu bermula pada hari Ahad dan berakhir pada hari Sabtu. Sesi Jumaat dipaparkan tetapi tidak dikira dalam Hadir / Jumlah dan Peratus.</p>
+    <p class="hint">Setiap angka ialah hadir per jumlah waktu bertugas. Dikira dari awal bulan atau minggu hingga hari ini, jadi rekod yang tertinggal boleh diisi kemudian. Minggu bermula pada hari Ahad dan berakhir pada hari Sabtu. Sesi Jumaat dipaparkan tetapi tidak dikira dalam Hadir / Jumlah dan Peratus. Imam atau bilal yang diganti dikira tidak hadir, dan orang yang menggantikannya dikira hadir.</p>
     <div class="actions">
       <button class="btn" id="mkMonSummary" type="button">Kiraan sebagai teks</button>
       <button class="btn" id="mkMonCsv" type="button">Kiraan CSV</button>
@@ -353,7 +363,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
       ['Encik Kamarul bin Yusof', 'Bilal', ['Maghrib', 'Isyak']]
     ];
     return {
-      sample: true, jumaat: true, records: {}, sessions: sessions,
+      sample: true, jumaat: true, ganti: {}, records: {}, sessions: sessions,
       people: ppl.map(function (x) { return { id: uid(), name: x[0], group: x[1], ses: ids(x[2]) }; })
     };
   }
@@ -367,6 +377,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
         Object.keys(r).forEach(function (pid) { if (r[pid] !== 'hadir') delete r[pid]; });
       });
     });
+    if (!o.ganti) o.ganti = {};
     /* Sesi Jumaat: ditambah sekali sahaja, hanya muncul pada hari Jumaat. */
     if (!o.jumaat) {
       var jm = null;
@@ -403,7 +414,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   var sid = null;
   var per = 'bulan';
   var pa = cur;
-  var pendingPerson = null, pendingSes = null, pendingReset = false, pendingTimer = null;
+  var pendingPerson = null, pendingSes = null, pendingReset = false, pendingTimer = null, pickFor = null;
 
   /* Sesi permulaan ialah cadangan kasar mengikut jam. Boleh ditukar bila-bila masa. */
   function pick() {
@@ -431,12 +442,20 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
   function assigned(s) { return state.people.filter(function (p) { return isAss(p, s); }); }
   function hadirOn(date, s, pid) { var d = state.records[date]; return !!(d && d[s] && d[s][pid]); }
   function hd(s, pid) { return hadirOn(cur, s, pid); }
+  /* Ganti: state.ganti[tarikh][sesi][idAsal] = idPengganti. Pengganti direkod hadir seperti biasa. */
+  function gantiList(s) { var d = state.ganti[cur]; return (d && d[s]) || {}; }
+  function gantiOf(date, s, pid) { var d = state.ganti[date]; return (d && d[s] && d[s][pid]) || null; }
+  function candidates(s) {
+    var used = {}, links = gantiList(s);
+    Object.keys(links).forEach(function (k) { used[links[k]] = 1; });
+    return state.people.filter(function (p) { return !isAss(p, s) && !hd(s, p.id) && !used[p.id]; });
+  }
   function sessionCounts(s) {
     var list = assigned(s), h = 0;
-    list.forEach(function (p) { if (hd(s, p.id)) h++; });
+    list.forEach(function (p) { if (hd(s, p.id) || gantiOf(cur, s, p.id)) h++; });
     return { total: list.length, hadir: h, belum: list.length - h, list: list };
   }
-  function clearPending() { pendingPerson = null; pendingSes = null; pendingReset = false; }
+  function clearPending() { pendingPerson = null; pendingSes = null; pendingReset = false; pickFor = null; }
   function armPending() { clearTimeout(pendingTimer); pendingTimer = setTimeout(function () { clearPending(); renderAll(); }, 3500); }
   function findPerson(id) { for (var i = 0; i < state.people.length; i++) if (state.people[i].id === id) return state.people[i]; return null; }
 
@@ -465,7 +484,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     $('bigLabel').textContent = 'hadir pada ' + s.name;
     $('sumLine').textContent = !c.total ? 'Tiada yang dijadualkan' : c.belum ? c.belum + ' belum ditanda' : 'Semua sudah hadir';
     $('bar').innerHTML = c.total && c.hadir ? '<i style="width:' + (c.hadir / c.total) * 100 + '%"></i>' : '';
-    var names = c.list.filter(function (p) { return !hd(s.id, p.id); }).map(function (p) { return p.name; });
+    var names = c.list.filter(function (p) { return !hd(s.id, p.id) && !gantiOf(cur, s.id, p.id); }).map(function (p) { return p.name; });
     $('pend').hidden = !names.length;
     $('pend').textContent = names.length ? 'Belum ditanda: ' + names.join(', ') : '';
   }
@@ -479,13 +498,36 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
           'Tiada sesiapa dijadualkan untuk ' + esc(s ? s.name : 'sesi ini') + '. Tandakan namanya di bahagian Jadual di bawah.') + '</li>';
       return;
     }
-    $('list').innerHTML = list.map(function (p) {
+    var links = gantiList(s.id), html = '';
+    function who(p, sub) {
+      return '<div class="who"><span class="av">' + esc(initials(p.name)) + '</span><div><div class="nm">' + esc(p.name) + '</div>' +
+        (sub ? '<div class="gp">' + esc(sub) + '</div>' : '') + '</div></div>';
+    }
+    list.forEach(function (p) {
+      var rp = links[p.id] ? findPerson(links[p.id]) : null;
       var h = hd(s.id, p.id);
-      return '<li class="row" data-id="' + p.id + '" data-h="' + (h ? 1 : 0) + '">' +
-        '<div class="who"><span class="av">' + esc(initials(p.name)) + '</span><div><div class="nm">' + esc(p.name) + '</div>' +
-        (p.group ? '<div class="gp">' + esc(p.group) + '</div>' : '') + '</div></div>' +
-        '<button type="button" class="tog" data-act="tog" aria-pressed="' + h + '" aria-label="' + esc(p.name) + ' hadir">' + (h ? '&#10003; Hadir' : 'Tanda hadir') + '</button></li>';
-    }).join('');
+      if (rp) {
+        html += '<li class="row" data-id="' + p.id + '" data-h="0" data-g="1">' + who(p, p.group) +
+          '<div class="gnt"><span>Diganti oleh <strong>' + esc(rp.name) + '</strong></span><button type="button" class="lnk" data-act="ungan">Batal ganti</button></div></li>';
+        html += '<li class="row" data-orig="' + p.id + '" data-h="1">' + who(rp, 'Ganti untuk ' + p.name) +
+          '<div class="gnt"><span class="pillh">&#10003; Hadir</span></div></li>';
+        return;
+      }
+      html += '<li class="row" data-id="' + p.id + '" data-h="' + (h ? 1 : 0) + '">' + who(p, p.group) +
+        '<div class="acts"><button type="button" class="tog" data-act="tog" aria-pressed="' + h + '" aria-label="' + esc(p.name) + ' hadir">' + (h ? '&#10003; Hadir' : 'Tanda hadir') + '</button>' +
+        (h ? '' : '<button type="button" class="lnk" data-act="gan">Diganti</button>') + '</div></li>';
+      if (pickFor === p.id) {
+        var cands = candidates(s.id);
+        html += '<li class="row gpick" data-orig="' + p.id + '"><strong>Siapa yang menggantikan ' + esc(p.name) + '?</strong>' +
+          (cands.length
+            ? '<div class="grow"><select id="gSel" aria-label="Pilih pengganti">' + cands.map(function (c) {
+                return '<option value="' + c.id + '">' + esc(c.name) + (c.group ? ' (' + esc(c.group) + ')' : '') + '</option>';
+              }).join('') + '</select><button type="button" class="btn primary" data-act="gsave">Simpan</button><button type="button" class="btn" data-act="gcancel">Batal</button></div>'
+            : '<div class="grow"><span style="color:var(--muted);font-size:0.85rem">Tiada nama lain. Tambah nama di bahagian Jadual di bawah.</span><button type="button" class="btn" data-act="gcancel">Tutup</button></div>') +
+          '</li>';
+      }
+    });
+    $('list').innerHTML = html;
   }
 
   function renderMatrix() {
@@ -494,10 +536,10 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     var body = state.people.map(function (p) {
       return '<tr><th scope="row">' + esc(p.name) + (p.group ? '<small>' + esc(p.group) + '</small>' : '') + '</th>' +
         visible(cur).map(function (s) {
-          var a = isAss(p, s.id), h = hd(s.id, p.id);
-          var k = h ? 'hadir' : a ? 'belum' : 'none';
-          var t = h ? 'Hadir' : a ? 'Belum ditanda' : 'Tidak dijadualkan';
-          return '<td><span class="cell" data-s="' + k + '" title="' + esc(s.name + ': ' + t) + '">' + (h ? '&#10003;' : a ? '&ndash;' : '&middot;') + '</span></td>';
+          var a = isAss(p, s.id), h = hd(s.id, p.id), g = gantiOf(cur, s.id, p.id), gp = g ? findPerson(g) : null;
+          var k = gp ? 'ganti' : h ? 'hadir' : a ? 'belum' : 'none';
+          var t = gp ? 'Diganti oleh ' + gp.name : h ? (a ? 'Hadir' : 'Hadir (ganti)') : a ? 'Belum ditanda' : 'Tidak dijadualkan';
+          return '<td><span class="cell" data-s="' + k + '" title="' + esc(s.name + ': ' + t) + '">' + (gp ? 'G' : h ? '&#10003;' : a ? '&ndash;' : '&middot;') + '</span></td>';
         }).join('') + '</tr>';
     }).join('');
     $('matrix').innerHTML = '<table class="mx">' + head + '<tbody>' + body + '</tbody></table>';
@@ -640,14 +682,34 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     sid = b.getAttribute('data-sid'); clearPending(); renderAll();
   });
 
-  /* Tanda hadir */
+  /* Tanda hadir dan ganti */
   $('list').addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-act="tog"]');
+    var btn = e.target.closest('[data-act]');
     if (!btn || !sid) return;
-    var id = btn.closest('.row').getAttribute('data-id');
-    var d = state.records[cur] || (state.records[cur] = {});
-    var r = d[sid] || (d[sid] = {});
-    if (r[id]) delete r[id]; else r[id] = 'hadir';
+    var act = btn.getAttribute('data-act'), row = btn.closest('li');
+    var id = row.getAttribute('data-id') || row.getAttribute('data-orig');
+    var recs = state.records[cur] || (state.records[cur] = {});
+    var r = recs[sid] || (recs[sid] = {});
+    if (act === 'tog') {
+      if (r[id]) delete r[id]; else r[id] = 'hadir';
+    } else if (act === 'gan') {
+      pickFor = id; renderList(); return;
+    } else if (act === 'gcancel') {
+      pickFor = null; renderList(); return;
+    } else if (act === 'gsave') {
+      var rp = $('gSel') ? $('gSel').value : '';
+      if (!rp) return;
+      var gd = state.ganti[cur] || (state.ganti[cur] = {});
+      var g = gd[sid] || (gd[sid] = {});
+      g[id] = rp; r[rp] = 'hadir'; delete r[id]; pickFor = null;
+    } else if (act === 'ungan') {
+      var gd2 = state.ganti[cur], g2 = gd2 && gd2[sid], rid = g2 && g2[id];
+      if (rid) {
+        delete g2[id];
+        var rpn = findPerson(rid);
+        if (!rpn || !isAss(rpn, sid)) delete r[rid];
+      }
+    } else { return; }
     save(); refresh();
   });
 
@@ -671,6 +733,12 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
       Object.keys(state.records).forEach(function (date) {
         Object.keys(state.records[date]).forEach(function (s) { delete state.records[date][s][id]; });
       });
+      Object.keys(state.ganti).forEach(function (date) {
+        Object.keys(state.ganti[date]).forEach(function (s) {
+          var g = state.ganti[date][s];
+          Object.keys(g).forEach(function (k) { if (k === id || g[k] === id) delete g[k]; });
+        });
+      });
       pendingPerson = null; save();
     } else { clearPending(); pendingPerson = id; armPending(); }
     renderAll();
@@ -688,18 +756,19 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
     if (!sid) return;
     var d = state.records[cur] || (state.records[cur] = {});
     var r = d[sid] || (d[sid] = {});
-    assigned(sid).forEach(function (p) { r[p.id] = 'hadir'; });
+    assigned(sid).forEach(function (p) { if (!gantiOf(cur, sid, p.id)) r[p.id] = 'hadir'; });
     save(); refresh();
   });
   $('resetSes').addEventListener('click', function () {
     if (pendingReset) {
       if (state.records[cur] && sid) delete state.records[cur][sid];
+      if (state.ganti[cur] && sid) delete state.ganti[cur][sid];
       clearPending(); save();
     } else { clearPending(); pendingReset = true; armPending(); }
     refresh();
   });
   $('clearSample').addEventListener('click', function () {
-    state.people = []; state.records = {}; state.sample = false;
+    state.people = []; state.records = {}; state.ganti = {}; state.sample = false;
     save(); renderAll();
   });
 
@@ -736,6 +805,7 @@ table.mx thead th.tot { color: var(--fg); font-weight: 600; }
       state.sessions = state.sessions.filter(function (s) { return s.id !== id; });
       state.people.forEach(function (p) { var i = p.ses.indexOf(id); if (i >= 0) p.ses.splice(i, 1); });
       Object.keys(state.records).forEach(function (date) { delete state.records[date][id]; });
+      Object.keys(state.ganti).forEach(function (date) { delete state.ganti[date][id]; });
       pendingSes = null; sid = pick(); save();
     } else { clearPending(); pendingSes = id; armPending(); }
     renderAll();
